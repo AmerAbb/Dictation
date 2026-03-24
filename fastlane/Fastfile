@@ -1,0 +1,41 @@
+default_platform(:mac)
+
+platform :mac do
+  desc "Create a new release (usage: fastlane release bump:patch)"
+  lane :release do |options|
+    bump = options[:bump] || "patch"
+
+    # Read current version from project.yml
+    project = YAML.safe_load(File.read("../project.yml"))
+    current = project["targets"]["Dictation"]["settings"]["base"]["MARKETING_VERSION"]
+
+    parts = current.split(".").map(&:to_i)
+    case bump
+    when "major"
+      parts[0] += 1
+      parts[1] = 0
+      parts[2] = 0
+    when "minor"
+      parts[1] += 1
+      parts[2] = 0
+    when "patch"
+      parts[2] += 1
+    end
+    new_version = parts.join(".")
+
+    # Update project.yml
+    content = File.read("../project.yml")
+    content.gsub!("MARKETING_VERSION: \"#{current}\"", "MARKETING_VERSION: \"#{new_version}\"")
+    content.gsub!("CURRENT_PROJECT_VERSION: \"#{current}\"", "CURRENT_PROJECT_VERSION: \"#{new_version}\"")
+    File.write("../project.yml", content)
+
+    UI.success("Bumped version: #{current} → #{new_version}")
+
+    # Commit, tag, and push
+    sh("git", "add", "../project.yml")
+    sh("git", "commit", "-m", "Bump version to #{new_version}")
+    sh("git", "tag", "v#{new_version}")
+    sh("git", "push")
+    sh("git", "push", "--tags")
+  end
+end

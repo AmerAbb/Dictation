@@ -1,5 +1,6 @@
 import AppKit
 import KeyboardShortcuts
+import Sparkle
 import SwiftUI
 
 @MainActor
@@ -11,6 +12,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private let pasteService = PasteService()
     private var previousApp: NSRunningApplication?
     private var settingsWindow: NSWindow?
+    private let updaterController = SPUStandardUpdaterController(
+        startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil
+    )
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -19,10 +23,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         setupStatusItem()
         setupHotkey()
 
+        updaterController.updater.checkForUpdatesInBackground()
+
         Task {
             let _ = await PermissionChecker.checkMicrophonePermission()
             await loadModel()
         }
+    }
+
+    @objc private func checkForUpdates() {
+        updaterController.checkForUpdates(nil)
     }
 
     // MARK: - Status Item
@@ -67,6 +77,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         )
         settingsItem.target = self
         menu.addItem(settingsItem)
+
+        // Check for Updates
+        let updateItem = NSMenuItem(
+            title: "Check for Updates...", action: #selector(checkForUpdates), keyEquivalent: ""
+        )
+        updateItem.target = self
+        menu.addItem(updateItem)
 
         menu.addItem(.separator())
 

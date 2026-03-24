@@ -7,41 +7,32 @@ A lightweight macOS menu bar app for push-to-talk speech-to-text. Hold a hotkey,
 - **Push-to-talk** — Hold `Option + `` ` to record, release to transcribe and paste
 - **100% local** — Speech-to-text runs on-device via OpenAI's Whisper model (no data leaves your Mac)
 - **Menu bar app** — Lives in your status bar, out of the way
+- **Auto-update** — Checks for new versions via [Sparkle](https://sparkle-project.org) and updates in-place
 - **Multiple Whisper models** — Choose between Tiny (~75 MB), Base (~150 MB), or Small (~500 MB) depending on speed vs. accuracy preference
 - **Smart paste** — Tries Accessibility API first, falls back to keyboard simulation, then AppleScript
 - **Models downloaded on demand** — Only downloads the model you select; cached in `~/Library/Application Support/Dictation/Models/`
 
-## Requirements
+## Install from Release
+
+Download the latest `Dictation.zip` from [Releases](https://github.com/amerabb/Dictation/releases), unzip, and move to `/Applications`. Future updates are delivered automatically via Sparkle.
+
+## Build from Source
+
+### Requirements
 
 - **macOS 14.0** (Sonoma) or later
-- **Swift 6.0** toolchain (ships with Xcode 16+)
-- An Apple Developer identity for code signing (needed for Accessibility permission to persist across launches)
+- **Xcode 16+** (Swift 6.0 toolchain)
+- [XcodeGen](https://github.com/yonaskolb/XcodeGen) — `brew install xcodegen`
 
-## Getting Started
-
-### 1. Clone and build
+### Build and run
 
 ```bash
 git clone https://github.com/amerabb/Dictation.git
 cd Dictation
-swift build -c release
-```
-
-### 2. Bundle into an app
-
-The included `bundle.sh` script creates a signed `.app` bundle:
-
-```bash
-# First, edit bundle.sh line 24 and replace the signing identity with your own:
-#   codesign --force --sign "Apple Development: you@example.com (TEAM_ID)" "$APP_BUNDLE"
-#
-# To find your signing identity:
-#   security find-identity -v -p codesigning
-
 ./bundle.sh
 ```
 
-### 3. Install and launch
+This generates the Xcode project, builds a release archive, and exports `Dictation.app`.
 
 ```bash
 cp -r Dictation.app /Applications/
@@ -50,7 +41,7 @@ open /Applications/Dictation.app
 
 To start automatically on login: **System Settings → General → Login Items** → add Dictation.
 
-### 4. Grant permissions
+### Grant permissions
 
 On first launch the app will request:
 
@@ -72,6 +63,20 @@ The menu bar icon reflects the current state:
 | ⏳ | Transcribing |
 | ⚠️ | Error (resets after 3s) |
 
+## Updates
+
+The app checks for updates once every 24 hours in the background. You can also check manually via the **Check for Updates...** menu item. Whisper models are stored outside the app bundle (`~/Library/Application Support/Dictation/Models/`) so they persist across updates — no re-download needed.
+
+## Releasing (maintainer)
+
+Releases are automated. Bump the version and push a tag:
+
+```bash
+fastlane release bump:patch   # or minor / major
+```
+
+This updates the version in `project.yml`, commits, tags, and pushes. GitHub Actions then builds, signs, generates the Sparkle appcast, and publishes the release.
+
 ## Project Structure
 
 ```
@@ -88,6 +93,8 @@ Sources/
 │   └── PasteService.swift       # Multi-method text insertion
 ├── Permissions/
 │   └── PermissionChecker.swift  # Microphone & Accessibility checks
+├── Updates/
+│   └── CheckForUpdatesViewModel.swift  # Sparkle update checking
 └── Views/
     └── SettingsView.swift       # Settings window UI
 ```
@@ -98,14 +105,13 @@ Sources/
 
 **Change the default model** — In `AppState.swift`, modify the default value of the `selectedModel` property.
 
-**Use a different signing identity** — Edit line 24 of `bundle.sh` with your own Apple Developer identity.
-
 ## Dependencies
 
 | Package | Purpose |
 |---------|---------|
 | [WhisperKit](https://github.com/argmaxinc/WhisperKit) | On-device speech-to-text using Whisper |
 | [KeyboardShortcuts](https://github.com/sindresorhus/KeyboardShortcuts) | Global hotkey registration |
+| [Sparkle](https://github.com/sparkle-project/Sparkle) | Auto-update framework |
 
 ## License
 

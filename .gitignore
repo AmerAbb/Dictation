@@ -1,6 +1,8 @@
 # Build
 .build/
+build/
 Dictation.app/
+*.zip
 
 # Swift Package Manager
 .swiftpm/
@@ -16,3 +18,7 @@ Dictation.app/
 *.xcworkspace
 xcuserdata/
 DerivedData/
+
+# Fastlane
+fastlane/report.xml
+fastlane/README.md
