@@ -28,8 +28,7 @@ jobs:
             -scheme Dictation \
             -configuration Release \
             -archivePath build/Dictation.xcarchive \
-            CODE_SIGN_IDENTITY="-" \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGN_IDENTITY="-"
 
       - name: Export app
         run: |
