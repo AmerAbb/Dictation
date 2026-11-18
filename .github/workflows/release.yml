@@ -10,7 +10,9 @@ permissions:
 
 jobs:
   build:
-    runs-on: macos-15
+    # Foundation Models is compiled conditionally, so use the Xcode 27 SDK rather
+    # than the older macOS 15 image used by the first release.
+    runs-on: xcode-27
 
     steps:
       - uses: actions/checkout@v4
@@ -20,6 +22,11 @@ jobs:
 
       - name: Generate Xcode project
         run: xcodegen generate
+
+      - name: Verify Foundation Models SDK
+        run: |
+          xcodebuild -version
+          test -d "$(xcrun --sdk macosx --show-sdk-path)/System/Library/Frameworks/FoundationModels.framework"
 
       - name: Resolve packages
         run: xcodebuild -project Dictation.xcodeproj -scheme Dictation -resolvePackageDependencies
