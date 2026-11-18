@@ -25,6 +25,8 @@ targets:
     info:
       path: Info.plist
       properties:
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         LSUIElement: true
         NSMicrophoneUsageDescription: "Dictation needs microphone access to record your voice for transcription."
         SUFeedURL: "https://github.com/amerabb/Dictation/releases/latest/download/appcast.xml"
