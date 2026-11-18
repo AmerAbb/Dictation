@@ -21,5 +21,10 @@ let package = Package(
             path: "Sources",
             swiftSettings: [.swiftLanguageMode(.v5)]
         ),
+        .testTarget(
+            name: "DictationTests",
+            dependencies: ["Dictation", "WhisperKit"],
+            path: "Tests"
+        ),
     ]
 )

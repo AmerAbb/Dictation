@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct SettingsView: View {
+    var onModelChange: (WhisperModel) -> Void
     @Environment(AppState.self) private var appState
     @State private var micPermission = false
     @State private var accessibilityPermission = false
@@ -19,13 +20,14 @@ struct SettingsView: View {
             }
 
             Section("Model") {
-                Picker("Whisper Model", selection: $appState.selectedModel) {
+                Picker("Whisper Model", selection: Binding(get: { appState.selectedModel }, set: onModelChange)) {
                     ForEach(WhisperModel.allCases, id: \.self) { model in
                         Text(model.displayName).tag(model)
                     }
                 }
+                .disabled(appState.isBusy || appState.isLoadingModel)
 
-                if !appState.isModelLoaded {
+                if appState.isLoadingModel {
                     HStack {
                         ProgressView()
                             .controlSize(.small)
@@ -33,6 +35,17 @@ struct SettingsView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+            }
+
+            Section("Dictation") {
+                Toggle("Auto-correct Dictation", isOn: $appState.autoCorrect)
+                    .disabled(appState.correctionUnavailableReason != nil && !appState.autoCorrect)
+                Text(appState.correctionUnavailableReason ?? "Fix grammar and obvious word mistakes on this Mac before inserting text.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text("Text appears live in the target field. The listening pill shows only microphone levels.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             Section("Permissions") {
@@ -58,7 +71,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 350, height: 300)
+        .frame(width: 390, height: 440)
         .onAppear {
             refreshPermissions()
         }
@@ -68,6 +81,7 @@ struct SettingsView: View {
     }
 
     private func refreshPermissions() {
+        appState.correctionUnavailableReason = CorrectionService.unavailableReason
         micPermission = PermissionChecker.isMicrophoneAuthorized
         accessibilityPermission = PermissionChecker.isAccessibilityAuthorized
     }

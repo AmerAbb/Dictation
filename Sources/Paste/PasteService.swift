@@ -4,7 +4,7 @@ import ApplicationServices
 @MainActor
 class PasteService {
     /// Returns a diagnostic message about what happened
-    func paste(text: String) -> String {
+    func paste(text: String, preferKeyboard: Bool = false) -> String {
         let trusted = AXIsProcessTrusted()
         if !trusted {
             copyToClipboard(text)
@@ -12,7 +12,7 @@ class PasteService {
         }
 
         // Try direct AX text insertion first (no clipboard needed)
-        let axResult = tryAccessibilityInsert(text)
+        let axResult = preferKeyboard ? "AX skipped for this editor" : tryAccessibilityInsert(text)
         if axResult == nil {
             return "Pasted via AX"
         }
@@ -34,6 +34,10 @@ class PasteService {
 
         // All paste methods failed - text is on clipboard as fallback
         return "Copied to clipboard (paste failed: AX=\(axResult!), CG=\(cgResult!), OS=\(osResult!))"
+    }
+
+    func copy(text: String) {
+        copyToClipboard(text)
     }
 
     private func copyToClipboard(_ text: String) {
