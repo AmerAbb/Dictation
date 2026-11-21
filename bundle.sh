@@ -19,6 +19,8 @@ xcodebuild -exportArchive \
   -exportPath "build/export" \
   -exportOptionsPlist ExportOptions.plist
 
+# cp -r into an existing bundle nests the new app inside the stale one.
+rm -rf "$APP_NAME.app"
 cp -r "build/export/$APP_NAME.app" "$APP_NAME.app"
 rm -rf build
 

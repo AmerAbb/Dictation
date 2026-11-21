@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 import Testing
 @testable import Dictation
 
@@ -338,4 +338,17 @@ private final class TestTextTarget: DictationTextTarget {
     target.delayedEchoReads = 0
     #expect(await session.update(text: "Hello there"))
     #expect(target.current.value == "Before Hello there after")
+}
+
+// A mouse click raised NSInternalInconsistencyException here, which AppKit swallowed
+// mid-drain and left every MainActor task (release detection, Cancel cleanup) stalled.
+@Test func inputMonitorClassifiesMouseEventsWithoutReadingKeyCode() throws {
+    let click = try #require(NSEvent.mouseEvent(with: .leftMouseDown, location: .zero, modifierFlags: [],
+        timestamp: 0, windowNumber: 0, context: nil, eventNumber: 0, clickCount: 1, pressure: 1))
+    #expect(!LiveTypingSession.isDictationShortcutKey(click))
+
+    let backtick = try #require(NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: .option,
+        timestamp: 0, windowNumber: 0, context: nil, characters: "`", charactersIgnoringModifiers: "`",
+        isARepeat: false, keyCode: 50))
+    #expect(LiveTypingSession.isDictationShortcutKey(backtick))
 }

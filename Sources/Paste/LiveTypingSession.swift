@@ -137,13 +137,21 @@ final class LiveTypingSession {
         end()
     }
 
+    /// `keyCode` raises an Objective-C exception on mouse events, so check the type first.
+    /// On the main queue AppKit swallows that exception mid-drain, stalling every MainActor task.
+    nonisolated static func isDictationShortcutKey(_ event: NSEvent) -> Bool {
+        event.type == .keyDown && event.keyCode == 50
+    }
+
     func monitorUserInput() {
         inputMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.keyDown, .leftMouseDown, .rightMouseDown]) { [weak self] event in
             if event.cgEvent?.getIntegerValueField(.eventSourceUserData) == NativeTextTarget.eventTag { return }
-            if event.type == .keyDown, event.keyCode == 50, event.modifierFlags.contains(.option) { return }
+            let isShortcutKey = Self.isDictationShortcutKey(event)
+            if isShortcutKey, event.modifierFlags.contains(.option) { return }
+            let eventType = String(event.type.rawValue)
             Task { @MainActor [weak self] in
-                DictationDiagnostics.record("input.observed", ["eventType": String(event.type.rawValue),
-                    "isShortcutKey": String(event.keyCode == 50)])
+                DictationDiagnostics.record("input.observed", ["eventType": eventType,
+                    "isShortcutKey": String(isShortcutKey)])
                 self?.suspend("Typing or cursor movement interrupted live insertion")
             }
         }
